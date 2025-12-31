@@ -32,29 +32,25 @@ func (tm *pgxTransactionManager) RunInTransaction(ctx context.Context, fn func(c
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	// 2. Setup Safety Net (Defer Rollback)
+	// Setup Safety Net (Defer Rollback)
 	defer func() {
-		// If the function panics, we rollback and re-panic
 		if p := recover(); p != nil {
 			tx.Rollback(ctx)
 			panic(p)
 		}
-		// We attempt rollback here, but if Commit was already called below,
-		// pgx detects it safely and does nothing.
+
 		tx.Rollback(ctx)
 	}()
 
-	// 3. Inject Transaction into Context
-	// This is the "Secret Sauce" - the Repo will find the Tx here
+	// Inject Transaction into Context
 	txCtx := context.WithValue(ctx, txKey{}, tx)
 
-	// 4. Run Business Logic
+	// Run Business Logic
 	if err := fn(txCtx); err != nil {
-		// If logic fails, we return error. The defer above triggers Rollback.
 		return err
 	}
 
-	// 5. Commit
+	// Commit
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
