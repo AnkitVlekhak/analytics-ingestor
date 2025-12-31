@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package analytics.v1;
+
+option go_package = "github.com/ankitlekhak/analytics-ingestor/pkg/api/v1";
+
+
+import "google/protobuf/timestamp.proto";
+
+message LogMetricsRequest {
+    string service_name = 1;
+    string metric_name = 2;
+    int64 value = 3;
+    google.protobuf.Timestamp timestamp = 4;
+}
+
+message LogMetricsResponse {
+	bool success = 1;
+}
+
+service AnalyticsService {
+	rpc LogMetric (LogMetricsRequest) returns (LogMetricsResponse);
+}
